@@ -1,0 +1,127 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Data.SqlClient;
+
+namespace TeamShienaFINALS
+{
+    public partial class Control : Form
+    {
+        public Control()
+        {
+            InitializeComponent();
+        }
+
+        public string connectionstring = "Data Source=MICHAEL\\SQLEXPRESS;Initial Catalog=First Database;Integrated Security=True";
+        SqlCommand cmd;
+        //SqlDataAdapter adapt;
+        int Id;
+        public int indexRow;
+
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            DisplayData();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            DisplayData();
+        }
+
+        private void DisplayData()
+        {
+            string sql = "SELECT * FROM StudentInfo ORDER BY ID DESC";
+            SqlConnection connection = new SqlConnection(connectionstring);
+            SqlDataAdapter dataadapter = new SqlDataAdapter(sql, connection);
+            DataSet ds = new DataSet();
+            connection.Open();
+            dataadapter.Fill(ds, "StudentInfo");
+            dataGridView1.DataSource = ds;
+            dataGridView1.DataMember = "StudentInfo";
+            connection.Close();
+        }
+
+        private void save_Click(object sender, EventArgs e)
+        {
+            SqlConnection con = new SqlConnection(connectionstring);
+            string txtname = textname.Text.Trim();
+            string txtcourse = textcourse.Text.Trim();
+            con.Open();
+            if (con.State == System.Data.ConnectionState.Open)
+            {
+                string array = "INSERT INTO StudentInfo VALUES('"
+           + txtname.ToString() + "', '" + txtcourse.ToString() + "')";
+                cmd = new SqlCommand(array, con);
+                cmd.ExecuteNonQuery();
+                con.Close();
+                MessageBox.Show("Record Inserted Successfully");
+            }
+
+            textname.Text = string.Empty;
+            textcourse.Text = string.Empty;
+            DisplayData();
+        }
+
+        private void update_Click(object sender, EventArgs e)
+        {
+            SqlConnection con = new SqlConnection(connectionstring);
+            if (textname.Text != "" && textcourse.Text != "" )
+            {
+                cmd = new SqlCommand("UPDATE StudentInfo SET Name=@name,Course=@course WHERE ID=@Id", con);
+                con.Open();
+                cmd.Parameters.AddWithValue("@Id", textid.Text);
+                cmd.Parameters.AddWithValue("@name", textname.Text);
+                cmd.Parameters.AddWithValue("@course", textcourse.Text);
+
+                cmd.ExecuteNonQuery();
+                con.Close();
+                MessageBox.Show("Updated Successfully");
+                DisplayData();
+            }
+            else
+            {
+                MessageBox.Show("Please enter mandatory details!");
+            }
+        }
+
+        private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            indexRow = e.RowIndex;
+            DataGridViewRow row = dataGridView1.Rows[indexRow];
+
+            textid.Text = row.Cells[0].Value.ToString();
+            textname.Text = row.Cells[1].Value.ToString();
+            textcourse.Text = row.Cells[2].Value.ToString();
+        }
+
+        private void delete_Click(object sender, EventArgs e)
+        {
+            if (MessageBox.Show("Are you sure to delete?", "Record deleted successfully!", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            {
+                SqlConnection connection = new SqlConnection(connectionstring);
+                connection.Open();
+
+                string q = "DELETE FROM StudentInfo";
+
+                SqlCommand cmd = new SqlCommand(q, connection);
+                cmd.ExecuteNonQuery();
+                textname.Clear();
+                textcourse.Text = string.Empty;
+                connection.Close();
+                DisplayData();
+            }
+        }
+
+        private void dataGridView1_RowHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            textname.Text = dataGridView1.Rows[e.RowIndex].Cells[1].Value.ToString();
+            textcourse.Text = dataGridView1.Rows[e.RowIndex].Cells[2].Value.ToString();
+        }
+    }
+}
